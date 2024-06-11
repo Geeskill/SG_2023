@@ -1,0 +1,51 @@
+# Chemin du fichier de sortie sur le bureau
+$outputFile = [System.IO.Path]::Combine([Environment]::GetFolderPath("Desktop"), "nslookup_results.txt")
+
+# Fonction pour effectuer le nslookup et retourner l'IP
+function Get-IPAddress($hostname)
+{
+    $nslookupResult = nslookup $hostname
+    foreach ($line in $nslookupResult)
+    {
+        if ($line -match "Address: ([\d\.]+)")
+        {
+            return $matches[1]
+        }
+    }
+    return $null
+}
+
+# Nom d'hôte à rechercher
+$hostname = "example.com"
+
+# Première IP trouvée
+$initialIP = $null
+
+# Deuxième IP différente trouvée
+$secondIP = $null
+
+# Boucle jusqu'à ce qu'une IP différente soit trouvée
+do
+{
+    $currentIP = Get-IPAddress $hostname
+    if ($initialIP -eq $null -and $currentIP -ne $null)
+    {
+        $initialIP = $currentIP
+    }
+    elseif ($initialIP -ne $currentIP -and $currentIP -ne $null)
+    {
+        $secondIP = $currentIP
+    }
+    Start-Sleep -Seconds 5 # Pause de 5 secondes avant la prochaine itération
+}
+while ($initialIP -eq $secondIP)
+
+# Affichage des résultats
+Write-Output "Initial IP: $initialIP"
+Write-Output "Second IP: $secondIP"
+
+# Écriture des résultats dans le fichier
+"Initial IP: $initialIP`nSecond IP: $secondIP" | Out-File -FilePath $outputFile -Encoding UTF8
+
+# Afficher une notification pour informer que le script est terminé
+[System.Windows.Forms.MessageBox]::Show("Le script nslookup est terminé. Résultats enregistrés dans $outputFile")
