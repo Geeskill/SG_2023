@@ -1,0 +1,46 @@
+#Requires AutoHotkey v2.0
+
+; Variables
+fileList := "C:\path\to\your\file.txt" ; Remplacer par le chemin réel de votre fichier .txt
+baseURL := "https://yum.oracle.com/repo/OracleLinux/OL7/latest/x86_64/getPackage/"
+maxDownloads := 10
+
+; Function to download file using Edge
+downloadFile(url) {
+    Run "msedge.exe " url
+}
+
+; Function to limit concurrent downloads
+concurrentDownloads(fileList, maxDownloads) {
+    fileContents := FileRead(fileList)
+    if (fileContents = "")
+    {
+        MsgBox "Le fichier est vide ou introuvable."
+        return
+    }
+    
+    packageList := StrSplit(fileContents, "`n") ; Splits the file by new lines
+    currentDownloads := 0
+
+    for package in packageList {
+        if package = "" ; Skip empty lines
+            continue
+
+        ; Construct the full download URL
+        fullURL := baseURL . Trim(package)
+
+        ; Download the file
+        downloadFile(fullURL)
+        currentDownloads++
+
+        ; Pause if the max number of downloads is reached
+        if (currentDownloads >= maxDownloads) {
+            MsgBox "En attente que des téléchargements soient terminés..."
+            Sleep 10000 ; Attendre 10 secondes avant de lancer les prochains téléchargements
+            currentDownloads := 0
+        }
+    }
+}
+
+; Execute the function to start downloading
+concurrentDownloads(fileList, maxDownloads)
